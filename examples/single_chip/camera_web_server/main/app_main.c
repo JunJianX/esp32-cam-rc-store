@@ -25,6 +25,11 @@
 #include "app_board.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
+#include <stdio.h>
+#include "file_download.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
 void app_main()
 {
@@ -34,5 +39,9 @@ void app_main()
     app_mdns_main();
 
     ESP_LOGI("esp-cam Version",CONFIG_ESP_CAM_VERSION);
+    printf("----------------START----------------\r\n");
+    file_download_init("zfb.jpg","zfb.jpg","127.0.0.1",80);
+    xTaskCreate(&file_download_store_task,"file_download_store_task",8192,NULL,8,NULL);
+    printf("-----------------END-----------------\r\n");
 
 }

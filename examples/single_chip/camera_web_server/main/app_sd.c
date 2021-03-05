@@ -36,7 +36,8 @@ typedef struct {
     SemaphoreHandle_t frame_ready;
     TaskHandle_t dma_filter_task;
 } sd_state_t;
-static sdmmc_card_t* card;
+// static sdmmc_card_t* card;
+sdmmc_card_t* card;
 //sd_state_t* sd_state = NULL;
 QueueHandle_t sd_ready;
 #ifdef USE_SPI_MODE
@@ -190,6 +191,6 @@ void SdCard_init(void)
 
     // Card has been initialized, print its properties
     sdmmc_card_print_info(stdout, card);
-    xTaskCreate(&Sdcard_task, "Sdcard_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&Sdcard_task, "Sdcard_task", 4096, NULL, 5, NULL);
 #endif
 }
