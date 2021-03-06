@@ -49,9 +49,11 @@
 #define EXAMPLE_ESP_WIFI_AP_CHANNEL CONFIG_ESP_WIFI_AP_CHANNEL
 
 static const char *TAG = "camera wifi";
+EventGroupHandle_t xEventGroup;
+#define BIT_0 (1<<0)
+#define BIT_1 (1<<1)
 
 static int s_retry_num = 0;
-
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     switch(event->event_id) {
@@ -69,12 +71,14 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         esp_wifi_connect();
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
+        // xEventGroupSetBits(xEventGroup,BIT_0);
         ESP_LOGI(TAG, "got ip:%s",
                  ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
         s_retry_num = 0;
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
         {
+            xEventGroupClearBits(xEventGroup,BIT_0);
             if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
                 esp_wifi_connect();
                 s_retry_num++;
@@ -139,10 +143,15 @@ void wifi_init_sta()
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:|%s| password:|%s|", EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
              //SSID_NAME, SSID_PASSWD);
+    xEventGroupSetBits(xEventGroup,BIT_0);
+
 }
 
 void app_wifi_main()
 {
+
+    xEventGroup =xEventGroupCreate();
+    xEventGroupClearBits(xEventGroup,BIT_0);
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     wifi_mode_t mode = WIFI_MODE_NULL;
     if (strlen(EXAMPLE_ESP_WIFI_AP_SSID) && strlen(EXAMPLE_ESP_WIFI_SSID)) {

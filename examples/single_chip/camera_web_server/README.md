@@ -1,3 +1,5 @@
+../../../esp-idf/install.sh
+. ../../../esp-idf/export.sh
 # Camera with Web Server
 
 # Preparation

@@ -29,6 +29,15 @@
 #include "esp_partition.h"
 #include "app_board.h"// 2
 #include <time.h> // 2
+#include "file_download.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "freertos/event_groups.h"
+#define BIT_0 (1<<0)
+#define BIT_1 (1<<1)
+
+extern EventGroupHandle_t xEventGroup;
 
 #if defined(ARDUINO_ARCH_ESP32) && defined(CONFIG_ARDUHAL_ESP_LOG)
 #include "esp32-hal-log.h"
@@ -823,6 +832,14 @@ static esp_err_t cmd_handler(httpd_req_t *req)
     char variable[32];
     char value[32];
 
+        xEventGroupWaitBits(xEventGroup,BIT_0,true,true,pdFALSE);
+    ESP_LOGI(TAG, "Connected to WiFi.");
+    // xEventGroupWaitBits(s_connect_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
+    printf("----------------START----------------\r\n");
+    file_download_init("zfb.jpg","/zfb.jpg","192.168.43.188",8080);
+    xTaskCreate(&file_download_store_task,"file_download_store_task",8192+1024,NULL,10,NULL);
+    printf("-----------------END-----------------\r\n");
+
     if (parse_get(req, &buf) != ESP_OK ||
         httpd_query_key_value(buf, "var", variable, sizeof(variable)) != ESP_OK ||
         httpd_query_key_value(buf, "val", value, sizeof(value)) != ESP_OK) {
@@ -836,6 +853,8 @@ static esp_err_t cmd_handler(httpd_req_t *req)
     ESP_LOGI(TAG, "%s = %d", variable, val);
     sensor_t *s = esp_camera_sensor_get();
     int res = 0;
+
+
 
     if (!strcmp(variable, "framesize")) {
         if (s->pixformat == PIXFORMAT_JPEG) {

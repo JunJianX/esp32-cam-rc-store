@@ -6,7 +6,6 @@
 PROJECT_NAME := camera_web_server
 
 SOLUTION_PATH ?= $(abspath $(shell pwd))/../../..
-
+IDF_PATH:=/home/xujunjian/Ai-Thinker-Open_ESP32-CAMERA_LAN/esp-idf
 include $(SOLUTION_PATH)/components/component_conf.mk
 include $(IDF_PATH)/make/project.mk
-

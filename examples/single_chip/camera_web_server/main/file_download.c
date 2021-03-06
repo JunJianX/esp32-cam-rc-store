@@ -26,6 +26,12 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include <lwip/netdb.h>
+
 // #include "esp_netif.h"
 #include "esp_event.h"
 
@@ -38,6 +44,15 @@ char FileName[30];
 char IP[16];
 int port;
 
+static void __attribute__((noreturn)) task_fatal_error()
+{
+    ESP_LOGE(TAG, "Exiting task due to fatal error...");
+    (void)vTaskDelete(NULL);
+
+    while (1) {
+        ;
+    }
+}
 void file_download_init(char *cfn,char *fn,char*ip,int P)
 {
     memset(CFileName,0,30);
@@ -84,12 +99,12 @@ char *enhance_strstr(char *buffer, char *goal, int len)
 static bool connect_to_http_server()
 {
     // ESP_LOGI(TAG, "Server IP: %s Server Port:%s", EXAMPLE_SERVER_IP, EXAMPLE_SERVER_PORT);
-    ESP_LOGI(TAG, "Server IP: %s Server Port:%d", IP, port);
+    ESP_LOGI(TAG, "Server IP: %s. Server Port:%d", IP, port);
 
     int  http_connect_flag = -1;
     struct sockaddr_in sock_info;
 
-    socket_id = socket(AF_INET, SOCK_STREAM, 0);
+    socket_id = lwip_socket(AF_INET, SOCK_STREAM, 0);
     if (socket_id == -1) {
         ESP_LOGE(TAG, "Create socket failed!");
         return false;
@@ -102,7 +117,7 @@ static bool connect_to_http_server()
     sock_info.sin_port = htons(port);
 
     // connect to http server
-    http_connect_flag = connect(socket_id, (struct sockaddr *)&sock_info, sizeof(sock_info));
+    http_connect_flag = lwip_connect(socket_id, (struct sockaddr *)&sock_info, sizeof(sock_info));
     if (http_connect_flag == -1) {
         ESP_LOGE(TAG, "Connect to server failed! errno=%d", errno);
         close(socket_id);
@@ -139,7 +154,7 @@ void file_download_store_task(void)
         ESP_LOGI(TAG, "Connected to http server");
     } else {
         ESP_LOGE(TAG, "Connect to http server failed!");
-        // task_fatal_error();
+        task_fatal_error();
     }
 
     const char *GET_FORMAT =
@@ -151,7 +166,7 @@ void file_download_store_task(void)
     int get_len = asprintf(&http_request, GET_FORMAT, "/",CFileName, IP, port);
     if (get_len < 0) {
         ESP_LOGE(TAG, "Failed to allocate memory for GET request buffer");
-        // task_fatal_error();
+        task_fatal_error();
     }
 
     printf("\r\n\r\n%s\r\n\r\n",http_request);
@@ -160,7 +175,7 @@ void file_download_store_task(void)
 
     if (res < 0) {
         ESP_LOGE(TAG, "Send GET request to server failed");
-        // task_fatal_error();
+        task_fatal_error();
     } else {
         ESP_LOGI(TAG, "Send GET request to server succeeded");
     }
