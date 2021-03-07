@@ -33,7 +33,8 @@
 #include "freertos/event_groups.h"
 
 
-
+extern EventGroupHandle_t xEventGroup;
+#define BIT_0 (1<<0)
 extern  void http_get_taskq(void *pvParameters);
 
 const char *TAG="MAIN";
@@ -42,18 +43,19 @@ void app_main()
 {
     app_board_main();
     app_httpd_main();
-    // app_mdns_main();
+    app_mdns_main();
 
     ESP_LOGI("esp-cam Version",CONFIG_ESP_CAM_VERSION);
 
-        xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
 
-    // xEventGroupWaitBits(xEventGroup,BIT_0,true,true,pdFALSE);
-    // ESP_LOGI(TAG, "Connected to WiFi.");
-    // // xEventGroupWaitBits(s_connect_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
+    xEventGroupWaitBits(xEventGroup,BIT_0,true,true,pdFALSE);
+    ESP_LOGI(TAG, "Connected to WiFi.");
+    // xEventGroupWaitBits(s_connect_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
     // printf("----------------START----------------\r\n");
-    // file_download_init("zfb.jpg","/zfb.jpg","192.168.43.188",8080);
-    // xTaskCreate(&file_download_store_task,"file_download_store_task",8192,NULL,3,NULL);
+    // file_download_init("zfb.jpg","/zfb.jpg","192.168.1.20","8080");
+    // vTaskDelay(3000/portTICK_PERIOD_MS);
+    //     xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
+    // // xTaskCreate(&file_download_store_task,"file_download_store_task",8192,NULL,3,NULL);
     // printf("-----------------END-----------------\r\n");
 
 }

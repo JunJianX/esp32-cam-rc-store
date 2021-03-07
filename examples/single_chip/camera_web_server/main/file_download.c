@@ -53,19 +53,19 @@ static void __attribute__((noreturn)) task_fatal_error()
         ;
     }
 }
-void file_download_init(char *cfn,char *fn,char*ip,int P)
-{
-    memset(CFileName,0,30);
-    memcpy(CFileName,cfn,strlen(cfn));
+// void file_download_init(char *cfn,char *fn,char*ip,int P)
+// {
+//     memset(CFileName,0,30);
+//     memcpy(CFileName,cfn,strlen(cfn));
 
-    memset(FileName,0,30);
-    memcpy(FileName,fn,strlen(fn));
+//     memset(FileName,0,30);
+//     memcpy(FileName,fn,strlen(fn));
 
-    memset(IP,0,16);
-    memcpy(IP,ip,strlen(ip));
+//     memset(IP,0,16);
+//     memcpy(IP,ip,strlen(ip));
 
-    port  = P;
-}
+//     port  = P;
+// }
 char *enhance_strstr(char *buffer, char *goal, int len)
 {
     uint16_t buffer_len = len;
@@ -200,23 +200,25 @@ void file_download_store_task(void)
                     }
                     printf("file size %d\n",file_size);
                 }
-            }
-            pos = strstr(text, "\r\n\r\n");
-            if (pos != NULL)
-            {
-                pos += 4;
-                int len = pos - text;
-                found_head = true;
-                size = buff_len - len;
-                totalSize += size;
-                fwrite(pos,1,size,f);
+            
+                pos = strstr(text, "\r\n\r\n");
+                if (pos != NULL)
+                {
+                    pos += 4;
+                    int len = pos - text;
+                    found_head = true;
+                    size = buff_len - len;
+                    totalSize += size;
+                    fwrite(pos,1,size,f);
+                }
             }
             fwrite(text,1,buff_len,f);
             totalSize+=buff_len;
         }
         else if(buff_len<=0)
         {
-            printf("trying\r\n");
+            // printf("trying\r\n");
+            printf(".");
 
         }
 
@@ -225,11 +227,14 @@ void file_download_store_task(void)
             //允许文件再次写入
 
             ESP_LOGI(TAG, "Connection closed, all packets received");
+            flag=false;
             fclose(f);
             break;
         }
-        ESP_LOGI(TAG, "Total Write binary data length : %d", file_size);
+        ESP_LOGI(TAG, "Total Write binary data length : %d,buff_len: %d", totalSize,buff_len);
     }
+    vTaskDelete(NULL);
+    
 // END:
 //     fclose(f);
 }

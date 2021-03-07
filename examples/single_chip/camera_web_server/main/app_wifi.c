@@ -143,10 +143,24 @@ void wifi_init_sta()
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:|%s| password:|%s|", EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
              //SSID_NAME, SSID_PASSWD);
-    xEventGroupSetBits(xEventGroup,BIT_0);
+    // xEventGroupSetBits(xEventGroup,BIT_0);
 
 }
 
+static void ip_event_handler(void* arg, esp_event_base_t event_base,
+                                int32_t event_id, void* event_data)
+{
+    switch (event_id) {
+        case IP_EVENT_STA_GOT_IP:
+                printf("duangduangdaungduangduangduangduangduang\r\n");
+                        xEventGroupSetBits(xEventGroup,BIT_0);
+
+            break;
+        default:
+            break;
+    }
+    return;
+}
 void app_wifi_main()
 {
 
@@ -169,7 +183,11 @@ void app_wifi_main()
     }
 
     tcpip_adapter_init();
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
+
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_wifi_set_mode(mode));
 

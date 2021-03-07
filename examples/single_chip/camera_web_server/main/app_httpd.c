@@ -831,14 +831,16 @@ static esp_err_t cmd_handler(httpd_req_t *req)
     char *buf = NULL;
     char variable[32];
     char value[32];
+    printf("-----------REQUST START--------\r\n");
 
-        xEventGroupWaitBits(xEventGroup,BIT_0,true,true,pdFALSE);
-    ESP_LOGI(TAG, "Connected to WiFi.");
-    // xEventGroupWaitBits(s_connect_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
-    printf("----------------START----------------\r\n");
-    file_download_init("zfb.jpg","/zfb.jpg","192.168.43.188",8080);
-    xTaskCreate(&file_download_store_task,"file_download_store_task",8192+1024,NULL,10,NULL);
-    printf("-----------------END-----------------\r\n");
+    printf("-----------REQUST END--------\r\n");
+    //         printf("----------------START----------------\r\n");
+    // file_download_init("zfb.jpg","/zfb.jpg","192.168.1.20","8080");
+    // vTaskDelay(3000/portTICK_PERIOD_MS);
+    //     xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&file_download_store_task,"file_download_store_task",8192,NULL,3,NULL);
+    // printf("-----------------END-----------------\r\n");
+
 
     if (parse_get(req, &buf) != ESP_OK ||
         httpd_query_key_value(buf, "var", variable, sizeof(variable)) != ESP_OK ||
@@ -1251,6 +1253,97 @@ static esp_err_t monitor_handler(httpd_req_t *req)
     return httpd_resp_send(req, (const char *)monitor_html_gz_start, monitor_html_gz_len);
 }
 
+static esp_err_t my_setting_handler(httpd_req_t *req)
+{
+    extern  void http_get_taskq(void *pvParameters);
+    char*  buf;
+    char flag = 0;
+    char *p=NULL;
+    char *p_end=NULL;
+    size_t buf_len;
+    buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        /* Copy null terminated value string into buffer */
+        if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found header => Host: %s", buf);
+        }
+        free(buf);
+    }
+
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1) 
+    {
+        buf = malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) 
+        {
+            ESP_LOGI(TAG, "Found URL query => %s", buf);
+            char param[60];
+            // char param1[60];
+            memset(param,0,60);
+            //http://192.168.1.20:8080
+            if (httpd_query_key_value(buf, "ip_port", param, sizeof(param)) == ESP_OK) {
+            ESP_LOGI(TAG, "Found URL query parameter => wifi=%s:%d", param,sizeof(param));
+            if(strlen(param)>0)
+            {
+                // memset(my_uart_event.ssid,0,sizeof(my_uart_event.ssid));
+                // memcpy(my_uart_event.ssid,param,strlen(param));
+                p = strstr(param,"http://");
+                if(p)
+                {
+                    p = p+strlen("http://");
+                }
+                p_end = strstr(p,':');
+                if(p_end)
+                {
+                    file_download_init(NULL,NULL,NULL,p_end+1);
+                }else
+                {
+                    file_download_init(NULL,NULL,NULL,"80");
+                }
+                p_end = 0;
+                file_download_init(NULL,NULL,p,NULL);
+
+                // /zfb.jpg
+                memset(param,0,60);
+                if (httpd_query_key_value(buf, "src", param, sizeof(param)) == ESP_OK) {
+                ESP_LOGI(TAG, "Found URL query parameter => src=%s:%d", param,sizeof(param));
+                if(strlen(param)>0){
+
+                    file_download_init(param,NULL,NULL,NULL);//服务器上的文件名省略‘/’
+                    
+                    flag = 1;
+                }
+            }
+            
+            // /zfb.jpg
+            memset(param,0,60);
+            if (httpd_query_key_value(buf, "saved_name", param, sizeof(param)) == ESP_OK) {
+            ESP_LOGI(TAG, "Found URL query parameter => saved_name=%s:%d", param,sizeof(param));
+            if(strlen(param)>0)
+            {
+                // memset(my_uart_event.ssid,0,sizeof(my_uart_event.ssid));
+                // memcpy(my_uart_event.ssid,param,strlen(param));
+                char temp[60]={0};
+                temp[0]='/';
+                memcpy(temp+1,param,strlen(param));
+                file_download_init(NULL,temp,NULL,NULL);
+                vTaskDelay(3000/portTICK_PERIOD_MS);
+                if(flag)
+                    xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
+                else
+                    ESP_LOGE(TAG,"Error in server ip,port or name");
+
+            }
+        }
+            
+    }
+
+    return httpd_resp_send(req, NULL, 0);
+
+    
+}
+
 void app_httpd_main()
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -1327,6 +1420,11 @@ void app_httpd_main()
         .method = HTTP_GET,
         .handler = monitor_handler,
         .user_ctx = NULL};
+    httpd_uri_t custom_uri = {
+        .uri = "/my_setting",
+        .method = HTTP_GET,
+        .handler = my_setting_handler,
+        .user_ctx = NULL};
 
     ra_filter_init(&ra_filter, 20);
 
@@ -1376,7 +1474,10 @@ void app_httpd_main()
 #endif 
         httpd_register_uri_handler(camera_httpd, &mdns_uri);
         httpd_register_uri_handler(camera_httpd, &monitor_uri);
+        httpd_register_uri_handler(camera_httpd, &custom_uri);
+
     }
+
 
     config.server_port += 1;
     config.ctrl_port += 1;
@@ -1384,5 +1485,5 @@ void app_httpd_main()
     if (httpd_start(&stream_httpd, &config) == ESP_OK)
     {
         httpd_register_uri_handler(stream_httpd, &stream_uri);
-    }
+//     }
 }
