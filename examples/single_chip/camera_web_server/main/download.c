@@ -42,6 +42,10 @@ static void __attribute__((noreturn)) task_fatal_error()
         ;
     }
 }
+void file_download_debug(void)
+{
+    printf("\r\ncfn:%s\r\nfn:%s\r\nip:%s\r\nport:%s\r\n",CFileName,FileName,IP,port);
+}
 void file_download_init(char *cfn,char *fn,char*ip,char *p)
 {
     if(cfn)
@@ -60,7 +64,7 @@ void file_download_init(char *cfn,char *fn,char*ip,char *p)
         memset(IP,0,16);
         memcpy(IP,ip,strlen(ip));
     }
-    if(port)
+    if(p)
     {
         memset(port,0,6);
         memcpy(port,p,strlen(p));
@@ -132,12 +136,13 @@ static void openfile(void)
     int ret = 0;
     int addr_family;
     int ip_protocol;
+    
     openfile();
 
     struct sockaddr_in dest_addr;
-    dest_addr.sin_addr.s_addr = inet_addr("192.168.1.20");
+    dest_addr.sin_addr.s_addr = inet_addr(IP);
     dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(8080);
+    dest_addr.sin_port = htons(atoi(port));
     addr_family = AF_INET;
     ip_protocol = IPPROTO_IP;
     // inet_ntoa_r(dest_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
@@ -224,7 +229,7 @@ static void openfile(void)
     freeaddrinfo(res);
     const char *GET_FORMAT =
     "GET %s%s HTTP/1.0\r\n"
-    "Host: %s:%d\r\n"
+    "Host: %s:%s\r\n"
     "User-Agent: esp-idf/1.0 esp32\r\n\r\n";
 
     int get_len = asprintf(&http_request, GET_FORMAT, "/",CFileName, IP, port);

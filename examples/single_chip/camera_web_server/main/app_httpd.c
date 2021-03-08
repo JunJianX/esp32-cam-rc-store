@@ -1265,7 +1265,8 @@ static esp_err_t my_setting_handler(httpd_req_t *req)
     if (buf_len > 1) {
         buf = malloc(buf_len);
         /* Copy null terminated value string into buffer */
-        if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) {
+        if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) 
+        {
             ESP_LOGI(TAG, "Found header => Host: %s", buf);
         }
         free(buf);
@@ -1282,58 +1283,67 @@ static esp_err_t my_setting_handler(httpd_req_t *req)
             // char param1[60];
             memset(param,0,60);
             //http://192.168.1.20:8080
-            if (httpd_query_key_value(buf, "ip_port", param, sizeof(param)) == ESP_OK) {
-            ESP_LOGI(TAG, "Found URL query parameter => wifi=%s:%d", param,sizeof(param));
-            if(strlen(param)>0)
+            if (httpd_query_key_value(buf, "ip_port", param, sizeof(param)) == ESP_OK) 
             {
-                // memset(my_uart_event.ssid,0,sizeof(my_uart_event.ssid));
-                // memcpy(my_uart_event.ssid,param,strlen(param));
-                p = strstr(param,"http://");
-                if(p)
+                ESP_LOGI(TAG, "Found URL query parameter => wifi=%s:%d", param,sizeof(param));
+                if(strlen(param)>0)
                 {
-                    p = p+strlen("http://");
-                }
-                p_end = strstr(p,':');
-                if(p_end)
-                {
-                    file_download_init(NULL,NULL,NULL,p_end+1);
-                }else
-                {
-                    file_download_init(NULL,NULL,NULL,"80");
-                }
-                p_end = 0;
-                file_download_init(NULL,NULL,p,NULL);
+                    // memset(my_uart_event.ssid,0,sizeof(my_uart_event.ssid));
+                    // memcpy(my_uart_event.ssid,param,strlen(param));
+                    p = strstr(param,"http://");
+                    if(p)
+                    {
+                        p = p+strlen("http://");
+                    }
+                    p_end = strstr(p,':');
+                    if(p_end)
+                    {
+                        file_download_init(NULL,NULL,NULL,p_end+1);
+                    }else
+                    {
+                        file_download_init(NULL,NULL,NULL,"80");
+                    }
+                    p_end = 0;
+                    file_download_init(NULL,NULL,p,NULL);
+                    printf("++++++++++++++++++++++\r\n");
+                    file_download_debug();
 
+                    // /zfb.jpg
+                    memset(param,0,60);
+                    if (httpd_query_key_value(buf, "src", param, sizeof(param)) == ESP_OK) 
+                    {
+                        ESP_LOGI(TAG, "Found URL query parameter => src=%s:%d", param,sizeof(param));
+                        if(strlen(param)>0)
+                        {
+                        
+                            file_download_init(param,NULL,NULL,NULL);//服务器上的文件名省略‘/’
+                            
+                            flag = 1;
+                        }
+                    }
+                }
+                
                 // /zfb.jpg
                 memset(param,0,60);
-                if (httpd_query_key_value(buf, "src", param, sizeof(param)) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query parameter => src=%s:%d", param,sizeof(param));
-                if(strlen(param)>0){
+                if (httpd_query_key_value(buf, "saved_name", param, sizeof(param)) == ESP_OK) 
+                {
+                    ESP_LOGI(TAG, "Found URL query parameter => saved_name=%s:%d", param,sizeof(param));
+                    if(strlen(param)>0)
+                    {
+                        // memset(my_uart_event.ssid,0,sizeof(my_uart_event.ssid));
+                        // memcpy(my_uart_event.ssid,param,strlen(param));
+                        char temp[60]={0};
+                        temp[0]='/';
+                        memcpy(temp+1,param,strlen(param));
+                        file_download_init(NULL,temp,NULL,NULL);
+                        vTaskDelay(3000/portTICK_PERIOD_MS);
+                        if(flag)
+                            xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
+                        else
+                            ESP_LOGE(TAG,"Error in server ip,port or name");
 
-                    file_download_init(param,NULL,NULL,NULL);//服务器上的文件名省略‘/’
-                    
-                    flag = 1;
+                    }
                 }
-            }
-            
-            // /zfb.jpg
-            memset(param,0,60);
-            if (httpd_query_key_value(buf, "saved_name", param, sizeof(param)) == ESP_OK) {
-            ESP_LOGI(TAG, "Found URL query parameter => saved_name=%s:%d", param,sizeof(param));
-            if(strlen(param)>0)
-            {
-                // memset(my_uart_event.ssid,0,sizeof(my_uart_event.ssid));
-                // memcpy(my_uart_event.ssid,param,strlen(param));
-                char temp[60]={0};
-                temp[0]='/';
-                memcpy(temp+1,param,strlen(param));
-                file_download_init(NULL,temp,NULL,NULL);
-                vTaskDelay(3000/portTICK_PERIOD_MS);
-                if(flag)
-                    xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
-                else
-                    ESP_LOGE(TAG,"Error in server ip,port or name");
-
             }
         }
             
@@ -1485,5 +1495,5 @@ void app_httpd_main()
     if (httpd_start(&stream_httpd, &config) == ESP_OK)
     {
         httpd_register_uri_handler(stream_httpd, &stream_uri);
-//     }
+    }
 }

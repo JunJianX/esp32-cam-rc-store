@@ -31,6 +31,8 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "freertos/event_groups.h"
+#include "esp_camera.h"
+#include "sensor.h"
 
 
 extern EventGroupHandle_t xEventGroup;
@@ -41,6 +43,7 @@ const char *TAG="MAIN";
 
 void app_main()
 {
+    int res;
     app_board_main();
     app_httpd_main();
     app_mdns_main();
@@ -50,6 +53,7 @@ void app_main()
 
     xEventGroupWaitBits(xEventGroup,BIT_0,true,true,pdFALSE);
     ESP_LOGI(TAG, "Connected to WiFi.");
+    
     // xEventGroupWaitBits(s_connect_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
     // printf("----------------START----------------\r\n");
     // file_download_init("zfb.jpg","/zfb.jpg","192.168.1.20","8080");
@@ -57,5 +61,14 @@ void app_main()
     //     xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
     // // xTaskCreate(&file_download_store_task,"file_download_store_task",8192,NULL,3,NULL);
     // printf("-----------------END-----------------\r\n");
+    sensor_t *s = esp_camera_sensor_get();
 
+    if (s->pixformat == PIXFORMAT_JPEG) 
+    {
+        res = s->set_framesize(s, FRAMESIZE_VGA);//set_framesize
+        if (res == 0) 
+        {
+            ESP_LOGI(TAG,"Frame size set success!");
+        }
+    }
 }
