@@ -29,7 +29,7 @@
 #include "esp_log.h"
 #include "esp_system.h"*/
 
-const char TAG[]="wrappers.c";
+static const char TAG[]="wrappers.c";
 /**
  *
  * 函数 HAL_Free() 需要SDK的使用者针对SDK将运行的硬件平台填充实现, 供SDK调用
@@ -113,7 +113,7 @@ int HAL_GetFirmwareVersion(char *version)
 {
     char TAG[]="wrappers.c";
 	if (!version) {
-         ESP_LOGE("%s version is NULL", __func__);
+         ESP_LOGE("Wrapper","%s version is NULL", __func__);
         printf("error version format!\n");
         return 0;
     }

@@ -33,6 +33,7 @@
 #include "lwip/sys.h"
 
 #include "mdns.h"
+#include "my_mqtt_client.h"
 
 /* The examples use WiFi configuration that you can set via 'make menuconfig'.
 
@@ -153,8 +154,8 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
     switch (event_id) {
         case IP_EVENT_STA_GOT_IP:
                 printf("duangduangdaungduangduangduangduangduang\r\n");
-                        xEventGroupSetBits(xEventGroup,BIT_0);
-
+                xEventGroupSetBits(xEventGroup,BIT_0);
+                xTaskCreate(&My_mqtt_task,"My_mqtt_task",8192,NULL,8,NULL);
             break;
         default:
             break;

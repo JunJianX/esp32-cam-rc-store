@@ -33,7 +33,6 @@
 #include "freertos/event_groups.h"
 #include "esp_camera.h"
 #include "sensor.h"
-#include "my_mqtt_client.h"
 
 
 extern EventGroupHandle_t xEventGroup;
@@ -72,6 +71,6 @@ void app_main()
             ESP_LOGI(TAG,"Frame size set success!");
         }
     }
-    xTaskCreate(&My_mqtt_task,"My_mqtt_task",8192,NULL,8,NULL);
+
 
 }

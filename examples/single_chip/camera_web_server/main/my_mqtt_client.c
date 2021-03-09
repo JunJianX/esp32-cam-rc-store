@@ -11,17 +11,17 @@
 #include "wrappers.h"
 #include "time.h"
 #include "cJSON.h"
-#include "my_uart.h"
-#include "my_tools.h"
+// #include "my_uart.h"
+// #include "my_tools.h"
 
-extern uint8_t aliyun_flag;
-extern uint8_t ota_start_flag;
-extern parse_event_struct_t my_uart_event;
+// extern uint8_t aliyun_flag;
+// extern uint8_t ota_start_flag;
+// extern parse_event_struct_t my_uart_event;
 
-char g_product_key[IOTX_PRODUCT_KEY_LEN + 1]       = "a1bV9YKyW1v";
-char g_product_secret[IOTX_PRODUCT_SECRET_LEN + 1] = "KcForemK5TuiBdT1";//
-char g_device_name[IOTX_DEVICE_NAME_LEN + 1]       = "kwEQ1yKOzDvLkbrO022t";
-char g_device_secret[IOTX_DEVICE_SECRET_LEN + 1]   = "BH9sHBHxNIXlO7AAoZwmfLYOi1vbWOI9";
+char g_product_key[IOTX_PRODUCT_KEY_LEN + 1]       = "a1h9HQrdQSw";
+char g_product_secret[IOTX_PRODUCT_SECRET_LEN + 1] = "oe9uVvWedVXXwKMg";//
+char g_device_name[IOTX_DEVICE_NAME_LEN + 1]       = "tflhmTDEjuEDDZLIJB30";
+char g_device_secret[IOTX_DEVICE_SECRET_LEN + 1]   = "61a38a37ce4cc819338ef0fca4d5864e";
 /*
 char g_product_key[IOTX_PRODUCT_KEY_LEN + 1]       = "a1MZxOdcBnO";
 char g_product_secret[IOTX_PRODUCT_SECRET_LEN + 1] = "h4I4dneEFp7EImTv";//
@@ -104,7 +104,7 @@ int example_subscribe(void *handle)
 int example_publish(void *handle)
 {
 
-    extern float Temperature;
+    // extern float Temperature;
     extern uint8_t humidity;
     extern uint16_t Gas;  
     extern uint8_t controller;
@@ -120,7 +120,7 @@ int example_publish(void *handle)
     int             payload_len = 0;
     // char           *payload = "{\"message\":\"hello!\"}";
     // char           *payload_fmt = "{\"Temperature\": %.2f,\"Humidity\":%d,\"Gas\":%d}";
-    char           *payload_fmt = "{\"id\":%ld,\"params\":{\"tempreature\":%f,\"humidity\":%d,\"gas_check\":%d,\"switch\":%d},\"method\":\"thing.event.property.post\"}";
+    char           *payload_fmt = "{\"id\":%ld,\"params\":{\"HeartRate\":%d,\"RunningTotalTime\":%d,\"RunningDistance\":%d,\"RunningSteps\":%d},\"method\":\"thing.event.property.post\"}";
     char           *payload = NULL;// = "{\"Temperature\": %2f,\"humidity\":%d%%}";
 
     time(&t);
@@ -140,8 +140,8 @@ int example_publish(void *handle)
         return -1; 
     }
     memset(payload,0,PAYLOAD_LEN);
-    // sprintf(payload,payload_fmt,Temperature,humidity,Gas);
-    sprintf(payload,payload_fmt,t,Temperature,humidity,Gas,controller);
+    sprintf(payload,payload_fmt,0,1,2);
+    sprintf(payload,payload_fmt,t,0,1,2,3);
     printf("\n%s\n",payload);
 
     printf("Publish payload:\n");
@@ -149,10 +149,10 @@ int example_publish(void *handle)
     if (res < 0) {
         EXAMPLE_TRACE("publish failed, res = %d", res);
         HAL_Free(topic);
-        aliyun_flag = 0;
+        // aliyun_flag = 0;
         return -1;
     }
-    aliyun_flag=1;
+    // aliyun_flag=1;
 
     HAL_Free(topic);
     HAL_Free(payload);
@@ -185,14 +185,14 @@ int everything_state_handle(const int state_code, const char *state_message)
      */
 
     
-        EXAMPLE_TRACE("recv -0x%04X(%s), means '%s'",
-                      -state_code,
-                      state_message,
-                      IOT_Extension_StateDesc(state_code));
+        // EXAMPLE_TRACE("recv -0x%04X(%s), means '%s'",
+        //               -state_code,
+        //               state_message,
+        //               IOT_Extension_StateDesc(state_code));
    
-    /*EXAMPLE_TRACE("recv -0x%04X(%s)",
+    EXAMPLE_TRACE("recv -0x%04X(%s)",
                   -state_code,
-                  state_message); */
+                  state_message);
     return 0;
 }
 
@@ -294,81 +294,81 @@ void parse_packet(uint16_t topic_len,const char * topic,uint16_t payload_len,con
 
 }
 
-void parse(uint16_t topic_len,const char * topic,uint16_t payload_len,const char *payload)
-{
-    cJSON *items = NULL,*item =NULL,*tmp = NULL;
-    items = cJSON_Parse(payload);
-    char buffer[6]="";
-    if (items == NULL) {
-		// fprintf(stderr, "pasre json file fail\n");
-        printf("pasre json file fail\n");
-		return -1;
-	}
-    item = cJSON_GetObjectItem(items, "params");
-    if(item ==NULL)
-    {
-        printf("pasre item file fail\n");
-		return -1;
-    }
-    tmp = cJSON_GetObjectItem(item, "param1");
-    if(tmp ==NULL)
-    {
-        printf("pasre tmp param1 fail\n");
+// void parse(uint16_t topic_len,const char * topic,uint16_t payload_len,const char *payload)
+// {
+//     cJSON *items = NULL,*item =NULL,*tmp = NULL;
+//     items = cJSON_Parse(payload);
+//     char buffer[6]="";
+//     if (items == NULL) {
+// 		// fprintf(stderr, "pasre json file fail\n");
+//         printf("pasre json file fail\n");
+// 		return -1;
+// 	}
+//     item = cJSON_GetObjectItem(items, "params");
+//     if(item ==NULL)
+//     {
+//         printf("pasre item file fail\n");
+// 		return -1;
+//     }
+//     tmp = cJSON_GetObjectItem(item, "param1");
+//     if(tmp ==NULL)
+//     {
+//         printf("pasre tmp param1 fail\n");
 		
-    }else
-    {
-        controller = tmp->valueint;
-        printf("using cJson to read param1:%d\n\n",tmp->valueint);    
-    }
-    tmp = cJSON_GetObjectItem(item, "ip");
-    if(tmp ==NULL)
-    {
-        printf("pasre tmp ip fail\n");
+//     }else
+//     {
+//         controller = tmp->valueint;
+//         printf("using cJson to read param1:%d\n\n",tmp->valueint);    
+//     }
+//     tmp = cJSON_GetObjectItem(item, "ip");
+//     if(tmp ==NULL)
+//     {
+//         printf("pasre tmp ip fail\n");
 		
-    }else
-    {
-        memset(my_uart_event.ip,0,16);
-        memcpy(my_uart_event.ip,tmp->valuestring,strlen(tmp->valuestring));
-        printf("Read new ip is %s\n",my_uart_event.ip);
-    }
-    tmp = cJSON_GetObjectItem(item, "port");
-    if(tmp ==NULL)
-    {
-        printf("pasre tmp port fail\n");
+//     }else
+//     {
+//         memset(my_uart_event.ip,0,16);
+//         memcpy(my_uart_event.ip,tmp->valuestring,strlen(tmp->valuestring));
+//         printf("Read new ip is %s\n",my_uart_event.ip);
+//     }
+//     tmp = cJSON_GetObjectItem(item, "port");
+//     if(tmp ==NULL)
+//     {
+//         printf("pasre tmp port fail\n");
 		
-    }else
-    {
-        /* code */
-        my_uart_event.port = atoi(tmp->valuestring);
+//     }else
+//     {
+//         /* code */
+//         my_uart_event.port = atoi(tmp->valuestring);
         
-        printf("Read new port is %d:\n",my_uart_event.port);
-        // itoa(my_uart_event.port,buffer,10);
-        Save_ip_port(my_uart_event.ip,tmp->valuestring);
-        // Save_ip_port((char *)("1.1.1.1"),(char *)("808"));
-    }
+//         printf("Read new port is %d:\n",my_uart_event.port);
+//         // itoa(my_uart_event.port,buffer,10);
+//         Save_ip_port(my_uart_event.ip,tmp->valuestring);
+//         // Save_ip_port((char *)("1.1.1.1"),(char *)("808"));
+//     }
     
     
 
-    tmp = cJSON_GetObjectItem(item, "ota");
-    if(tmp ==NULL)
-    {
-        printf("pasre tmp ota fail\n");
+//     tmp = cJSON_GetObjectItem(item, "ota");
+//     if(tmp ==NULL)
+//     {
+//         printf("pasre tmp ota fail\n");
 		
-    }else
-    {
-        my_uart_event.event_type = 1;
-        ota_start_flag =1;
-        printf("Read new ota is %d:\n",my_uart_event.event_type);
-    }
+//     }else
+//     {
+//         my_uart_event.event_type = 1;
+//         ota_start_flag =1;
+//         printf("Read new ota is %d:\n",my_uart_event.event_type);
+//     }
     
     
-    // my_uart_event
+//     // my_uart_event
 
 
-    cJSON_Delete(items);
-    cJSON_Delete(item);
-    cJSON_Delete(tmp);
-}
+//     cJSON_Delete(items);
+//     cJSON_Delete(item);
+//     cJSON_Delete(tmp);
+// }
 void event_handle_mqtt(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg)
 {
     uintptr_t packet_id = (uintptr_t)msg->msg;
@@ -429,7 +429,7 @@ void event_handle_mqtt(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg
                           topic_info->ptopic,
                           topic_info->payload_len,
                           topic_info->payload);
-            parse(topic_info->topic_len,topic_info->ptopic,topic_info->payload_len,topic_info->payload);
+            // parse(topic_info->topic_len,topic_info->ptopic,topic_info->payload_len,topic_info->payload);
             break;
 
         default:
@@ -438,12 +438,12 @@ void event_handle_mqtt(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg
     }
 }
 
-static int user_timestamp_reply_event_handler(const char *timestamp)
-{
-    LOGD(MOD_SOLO, "time is %s", timestamp);
-    HAL_UTC_Set(atoll(timestamp));
-    return 0;
-}
+// static int user_timestamp_reply_event_handler(const char *timestamp)
+// {
+//     LOGD(MOD_SOLO, "time is %s", timestamp);
+//     HAL_UTC_Set(atoll(timestamp));
+//     return 0;
+// }
 void My_mqtt_task(void /**parm*/)
 {
     void                   *pclient = NULL;
@@ -457,7 +457,7 @@ void My_mqtt_task(void /**parm*/)
 
     IOT_RegisterCallback(ITE_IDENTITY_RESPONSE, identity_response_handle);
     IOT_RegisterCallback(ITE_STATE_EVERYTHING, everything_state_handle);
-    IOT_RegisterCallback(ITE_TIMESTAMP_REPLY, user_timestamp_reply_event_handler);
+    // IOT_RegisterCallback(ITE_TIMESTAMP_REPLY, user_timestamp_reply_event_handler);
 
     // IOT_RegisterCallback(ITE_SERVICE_REQUEST, property_set_event_handle);
     // IOT_RegisterCallback(ITE_SERVICE_REQUEST, property_set_event_handle);
@@ -480,27 +480,27 @@ void My_mqtt_task(void /**parm*/)
         return ;
     }
     // printf("\nline 174\n");
-    aliyun_flag = 1;
+    // aliyun_flag = 1;
     IOT_Ioctl(IOTX_IOCTL_GET_PRODUCT_KEY, g_product_key);
     IOT_Ioctl(IOTX_IOCTL_GET_DEVICE_NAME, g_device_name);
 
     res = example_subscribe(pclient);
     if (res < 0) {
         IOT_MQTT_Destroy(&pclient);
+        // aliyun_flag = 0;
         return ;
-        aliyun_flag = 0;
     }
     
 
     while (1) {
-        if (0 == loop_cnt % (253*5)) {
+        if (0 == loop_cnt % (2530)) {
             example_publish(pclient);
         }
-        if(ota_start_flag==1)
-        {
-            printf("DELETE My_mqtt_task!\n\n");
-            vTaskDelete(NULL);
-        }
+        // if(ota_start_flag==1)
+        // {
+        //     printf("DELETE My_mqtt_task!\n\n");
+        //     vTaskDelete(NULL);
+        // }
 
         IOT_MQTT_Yield(pclient, 200);
 
