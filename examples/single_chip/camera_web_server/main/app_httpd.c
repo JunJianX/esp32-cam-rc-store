@@ -1280,9 +1280,11 @@ static esp_err_t my_setting_handler(httpd_req_t *req)
         {
             ESP_LOGI(TAG, "Found URL query => %s", buf);
             char param[60];
+            char *pointer=NULL;
             // char param1[60];
             memset(param,0,60);
             //http://192.168.1.20:8080
+            //192.168.1.124:80
             if (httpd_query_key_value(buf, "ip_port", param, sizeof(param)) == ESP_OK) 
             {
                 ESP_LOGI(TAG, "Found URL query parameter => wifi=%s:%d", param,sizeof(param));
@@ -1294,19 +1296,23 @@ static esp_err_t my_setting_handler(httpd_req_t *req)
                     if(p)
                     {
                         p = p+strlen("http://");
+                    }else
+                    {
+                        p = param;
                     }
-                    p_end = strstr(p,':');
+
+                    p_end = strstr(p,"%3A");
                     if(p_end)
                     {
-                        file_download_init(NULL,NULL,NULL,p_end+1);
+                        printf("Port:%s\r\n",p_end+3);
+                        file_download_init(NULL,NULL,NULL,p_end+3);
+                        *p_end = 0;
                     }else
                     {
                         file_download_init(NULL,NULL,NULL,"80");
                     }
-                    p_end = 0;
                     file_download_init(NULL,NULL,p,NULL);
-                    printf("++++++++++++++++++++++\r\n");
-                    file_download_debug();
+                    
 
                     // /zfb.jpg
                     memset(param,0,60);
@@ -1338,7 +1344,11 @@ static esp_err_t my_setting_handler(httpd_req_t *req)
                         file_download_init(NULL,temp,NULL,NULL);
                         vTaskDelay(3000/portTICK_PERIOD_MS);
                         if(flag)
+                        {
+                            printf("++++++++++++++++++++++\r\n");
+                            file_download_debug();
                             xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
+                        }
                         else
                             ESP_LOGE(TAG,"Error in server ip,port or name");
 
@@ -1346,6 +1356,7 @@ static esp_err_t my_setting_handler(httpd_req_t *req)
                 }
             }
         }
+        free(buf);
             
     }
 

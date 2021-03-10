@@ -331,6 +331,7 @@ static void openfile(void)
 
             ESP_LOGI(TAG, "Connection closed, all packets received");
             fclose(f);
+            close(s);
             flag =false;
             break;
         }
