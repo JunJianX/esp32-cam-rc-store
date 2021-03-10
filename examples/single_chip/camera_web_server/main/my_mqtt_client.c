@@ -11,6 +11,8 @@
 #include "wrappers.h"
 #include "time.h"
 #include "cJSON.h"
+#include "file_download.h"
+#include "esp_log.h"
 // #include "my_uart.h"
 // #include "my_tools.h"
 
@@ -27,7 +29,7 @@ char g_product_key[IOTX_PRODUCT_KEY_LEN + 1]       = "a1MZxOdcBnO";
 char g_product_secret[IOTX_PRODUCT_SECRET_LEN + 1] = "h4I4dneEFp7EImTv";//
 char g_device_name[IOTX_DEVICE_NAME_LEN + 1]       = "example1";
 char g_device_secret[IOTX_DEVICE_SECRET_LEN + 1]   = "jiPvZkVO9lhNj2Q9f2KdP4Yln7ACJI3X";*/
-
+static char *TAG = "ALI_MQTT";
 #define EXAMPLE_TRACE(fmt, ...)  \
     do { \
         HAL_Printf("%s|%03d :: ", __func__, __LINE__); \
@@ -103,11 +105,6 @@ int example_subscribe(void *handle)
 #define PAYLOAD_LEN  200
 int example_publish(void *handle)
 {
-
-    // extern float Temperature;
-    extern uint8_t humidity;
-    extern uint16_t Gas;  
-    extern uint8_t controller;
     time_t t;
 
     int             res = 0;
@@ -286,7 +283,7 @@ void parse_packet(uint16_t topic_len,const char * topic,uint16_t payload_len,con
     if (items == NULL) {
 		// fprintf(stderr, "pasre json file fail\n");
         printf("pasre json file fail\n");
-		return -1;
+		return ;
 	}
     item = cJSON_GetObjectItem(items, "params");
     tmp = cJSON_GetObjectItem(item, "param1");
@@ -294,81 +291,50 @@ void parse_packet(uint16_t topic_len,const char * topic,uint16_t payload_len,con
 
 }
 
-// void parse(uint16_t topic_len,const char * topic,uint16_t payload_len,const char *payload)
-// {
-//     cJSON *items = NULL,*item =NULL,*tmp = NULL;
-//     items = cJSON_Parse(payload);
-//     char buffer[6]="";
-//     if (items == NULL) {
-// 		// fprintf(stderr, "pasre json file fail\n");
-//         printf("pasre json file fail\n");
-// 		return -1;
-// 	}
-//     item = cJSON_GetObjectItem(items, "params");
-//     if(item ==NULL)
-//     {
-//         printf("pasre item file fail\n");
-// 		return -1;
-//     }
-//     tmp = cJSON_GetObjectItem(item, "param1");
-//     if(tmp ==NULL)
-//     {
-//         printf("pasre tmp param1 fail\n");
-		
-//     }else
-//     {
-//         controller = tmp->valueint;
-//         printf("using cJson to read param1:%d\n\n",tmp->valueint);    
-//     }
-//     tmp = cJSON_GetObjectItem(item, "ip");
-//     if(tmp ==NULL)
-//     {
-//         printf("pasre tmp ip fail\n");
-		
-//     }else
-//     {
-//         memset(my_uart_event.ip,0,16);
-//         memcpy(my_uart_event.ip,tmp->valuestring,strlen(tmp->valuestring));
-//         printf("Read new ip is %s\n",my_uart_event.ip);
-//     }
-//     tmp = cJSON_GetObjectItem(item, "port");
-//     if(tmp ==NULL)
-//     {
-//         printf("pasre tmp port fail\n");
-		
-//     }else
-//     {
-//         /* code */
-//         my_uart_event.port = atoi(tmp->valuestring);
-        
-//         printf("Read new port is %d:\n",my_uart_event.port);
-//         // itoa(my_uart_event.port,buffer,10);
-//         Save_ip_port(my_uart_event.ip,tmp->valuestring);
-//         // Save_ip_port((char *)("1.1.1.1"),(char *)("808"));
-//     }
-    
-    
+void parse(uint16_t topic_len,const char * topic,uint16_t payload_len,const char *payload)
+{
+    cJSON *items = NULL,*item =NULL,*tmp = NULL;
+    items = cJSON_Parse(payload);
+    // char buffer[6]="";
+    if (items == NULL) {
+		// fprintf(stderr, "pasre json file fail\n");
+        printf("pasre json file fail\n");
+		return -1;
+	}
+    printf("\r\n%s\r\n",payload);
+    tmp = cJSON_GetObjectItem(items, "params");
+    if(tmp ==NULL)
+    {
+        printf("pasre item file fail\n");
+		return -1;
+    }else
+    {
+        item = cJSON_GetObjectItem(tmp,"ip");
+        ESP_LOGI(TAG,"IP is:%s.",item->valuestring);
+        file_download_init(NULL,NULL,item->valuestring,NULL);
 
-//     tmp = cJSON_GetObjectItem(item, "ota");
-//     if(tmp ==NULL)
-//     {
-//         printf("pasre tmp ota fail\n");
-		
-//     }else
-//     {
-//         my_uart_event.event_type = 1;
-//         ota_start_flag =1;
-//         printf("Read new ota is %d:\n",my_uart_event.event_type);
-//     }
-    
-    
-//     // my_uart_event
+        item = cJSON_GetObjectItem(tmp,"port");
+        ESP_LOGI(TAG,"port is:%s.",item->valuestring);
+        file_download_init(NULL,NULL,NULL,item->valuestring);
 
+        item = cJSON_GetObjectItem(tmp,"server_file_name");
+        ESP_LOGI(TAG,"server_file_name is:%s.",item->valuestring);
+        file_download_init(item->valuestring,NULL,NULL,NULL);
 
-//     cJSON_Delete(items);
-//     cJSON_Delete(item);
-//     cJSON_Delete(tmp);
-// }
+        item = cJSON_GetObjectItem(tmp,"sd_file_name");
+        ESP_LOGI(TAG,"sd_file_name is:%s.",item->valuestring);
+        file_download_init(NULL,item->valuestring,NULL,NULL);
+
+        ESP_LOGI(TAG,"Cloud config OK.Start Download!");
+        file_download_debug();
+
+        extern  void http_get_taskq(void *pvParameters);
+        xTaskCreate(&http_get_taskq, "http_get_task", 4096, NULL, 5, NULL);
+
+    }
+
+    cJSON_Delete(items);
+}
 void event_handle_mqtt(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg)
 {
     uintptr_t packet_id = (uintptr_t)msg->msg;
@@ -429,7 +395,7 @@ void event_handle_mqtt(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg
                           topic_info->ptopic,
                           topic_info->payload_len,
                           topic_info->payload);
-            // parse(topic_info->topic_len,topic_info->ptopic,topic_info->payload_len,topic_info->payload);
+            parse(topic_info->topic_len,topic_info->ptopic,topic_info->payload_len,topic_info->payload);
             break;
 
         default:
