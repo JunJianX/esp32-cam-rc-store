@@ -27,7 +27,7 @@ char CFileName[30];
 char FileName[30];
 char IP[16];
 char port[6];
-
+int sock;
 // static const char *REQUEST = "GET " WEB_URL " HTTP/1.0\r\n"
 //     "Host: "WEB_SERVER"\r\n"
 //     "User-Agent: esp-idf/1.0 esp32\r\n"
@@ -147,11 +147,15 @@ static void openfile(void)
     ip_protocol = IPPROTO_IP;
     // inet_ntoa_r(dest_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
 
-    int sock =  socket(addr_family, SOCK_STREAM, ip_protocol);
-    if (sock < 0) {
-        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-        // break;
+    if(sock <= 0)
+    {
+        sock =  socket(addr_family, SOCK_STREAM, ip_protocol);
+        if (sock < 0) {
+            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            // break;
+        }
     }
+    
 
     ESP_LOGI(TAG, "Socket created, connecting to ");
 
